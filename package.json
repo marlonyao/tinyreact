@@ -1,0 +1,16 @@
+{
+  "name": "tinyreact",
+  "version": "1.0.0",
+  "description": "A minimal React-like framework for learning purposes",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/tests/*.test.js"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^28.0.1",
+    "@types/node": "^20.0.0",
+    "jsdom": "^24.0.0",
+    "typescript": "^5.4.0"
+  }
+}
