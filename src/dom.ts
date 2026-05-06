@@ -34,6 +34,17 @@ export function setProps(element: HTMLElement, props: Record<string, any>): void
       continue;
     }
 
+    // 布尔属性 / 表单属性：直接设置 property
+    if (key === 'checked' || key === 'selected' || key === 'disabled' || key === 'readOnly') {
+      (element as any)[key] = value;
+      continue;
+    }
+
+    if (key === 'value') {
+      (element as any).value = value;
+      continue;
+    }
+
     if (key === 'style') {
       if (typeof value === 'string') {
         element.style.cssText = value;
@@ -67,6 +78,10 @@ export function updateProps(element: HTMLElement, propPatches: PropPatch[]): voi
         element.className = '';
       } else if (key === 'style') {
         element.style.cssText = '';
+      } else if (key === 'checked' || key === 'selected' || key === 'disabled' || key === 'readOnly') {
+        (element as any)[key] = false;
+      } else if (key === 'value') {
+        (element as any).value = '';
       } else {
         element.removeAttribute(key);
       }
@@ -89,6 +104,10 @@ export function updateProps(element: HTMLElement, propPatches: PropPatch[]): voi
         }
       } else if (key === 'className') {
         element.className = String(value);
+      } else if (key === 'checked' || key === 'selected' || key === 'disabled' || key === 'readOnly') {
+        (element as any)[key] = value;
+      } else if (key === 'value') {
+        (element as any).value = value;
       } else {
         element.setAttribute(key, String(value));
       }

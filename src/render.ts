@@ -18,8 +18,8 @@ interface ContainerState {
 const containerMap = new WeakMap<HTMLElement, ContainerState>();
 const rootMap = new WeakMap<HTMLElement, { vnode: VNode; container: HTMLElement }>();
 
-// 组件实例缓存：fn -> key -> instance
-const instanceMap = new WeakMap<Function, Map<string, ComponentInstance>>();
+// 组件实例缓存：container -> fn -> key -> instance
+const instanceMap = new WeakMap<HTMLElement, WeakMap<Function, Map<string, ComponentInstance>>>();
 
 function getInstanceKey(props: Record<string, any>): string {
   return props.key ?? '__default__';
@@ -30,10 +30,15 @@ function getOrCreateInstance(
   props: Record<string, any>,
   container: HTMLElement
 ): ComponentInstance {
-  let fnMap = instanceMap.get(fn);
+  let containerMap = instanceMap.get(container);
+  if (!containerMap) {
+    containerMap = new WeakMap();
+    instanceMap.set(container, containerMap);
+  }
+  let fnMap = containerMap.get(fn);
   if (!fnMap) {
     fnMap = new Map();
-    instanceMap.set(fn, fnMap);
+    containerMap.set(fn, fnMap);
   }
   const key = getInstanceKey(props);
   let instance = fnMap.get(key);

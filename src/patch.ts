@@ -52,7 +52,15 @@ export function applyPatch(patch: Patch, parentDOM: Node): void {
       }
 
       if (patch.children && patch.children.length > 0) {
-        for (const childPatch of patch.children) {
+        // REMOVE 操作按索引降序执行（先删后面的，避免影响前面节点的索引）
+        // 其他操作按索引升序执行
+        const removes = patch.children.filter(p => p.type === 'REMOVE').sort((a, b) => (b.index ?? 0) - (a.index ?? 0));
+        const others = patch.children.filter(p => p.type !== 'REMOVE').sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
+        for (const childPatch of others) {
+          applyPatch(childPatch, targetDOM);
+        }
+        for (const childPatch of removes) {
           applyPatch(childPatch, targetDOM);
         }
       }
