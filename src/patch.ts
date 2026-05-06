@@ -41,11 +41,16 @@ export function applyPatch(patch: Patch, parentDOM: Node): void {
     }
     case 'UPDATE': {
       if (!targetDOM) break;
-      
+
+      // 同步 DOM 引用到新 VNode，确保下次 diff 时能找到正确的 DOM 节点
+      if (patch.vnode) {
+        patch.vnode.dom = targetDOM;
+      }
+
       if (patch.props) {
         updateProps(targetDOM as HTMLElement, patch.props);
       }
-      
+
       if (patch.children && patch.children.length > 0) {
         for (const childPatch of patch.children) {
           applyPatch(childPatch, targetDOM);
