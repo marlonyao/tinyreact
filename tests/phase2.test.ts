@@ -57,6 +57,7 @@ describe('Phase 2: Diff 算法', () => {
       // 子节点应该有 TEXT patch
       assert.strictEqual(patch?.children?.[0]?.type, 'TEXT');
       assert.strictEqual(patch?.children?.[0]?.text, 'new');
+      assert.strictEqual(patch?.children?.[0]?.index, 0);
     });
 
     it('文本内容相同 → 无 patch', () => {
@@ -115,6 +116,7 @@ describe('Phase 2: Diff 算法', () => {
       const patch = diff(oldVNode, newVNode);
       assert.strictEqual(patch?.type, 'UPDATE');
       assert.strictEqual(patch?.children?.[0]?.type, 'ADD');
+      assert.strictEqual(patch?.children?.[0]?.index, 0);
     });
 
     it('子节点删除', () => {
@@ -125,6 +127,7 @@ describe('Phase 2: Diff 算法', () => {
       const patch = diff(oldVNode, newVNode);
       assert.strictEqual(patch?.type, 'UPDATE');
       assert.strictEqual(patch?.children?.[0]?.type, 'REMOVE');
+      assert.strictEqual(patch?.children?.[0]?.index, 0);
     });
 
     it('子节点替换', () => {
@@ -137,6 +140,7 @@ describe('Phase 2: Diff 算法', () => {
       const patch = diff(oldVNode, newVNode);
       assert.strictEqual(patch?.type, 'UPDATE');
       assert.strictEqual(patch?.children?.[0]?.type, 'REPLACE');
+      assert.strictEqual(patch?.children?.[0]?.index, 0);
     });
 
     it('多个子节点混合变更', () => {
@@ -154,6 +158,8 @@ describe('Phase 2: Diff 算法', () => {
       // 第1个相同（null），第2个变成 UPDATE（内容变），第3个 ADD
       // 但因为我们现在没有 key 优化，按索引对比
       assert.strictEqual(patch?.children?.length, 2); // 第2个 UPDATE, 第3个 ADD
+      assert.strictEqual(patch?.children?.[0]?.index, 1);
+      assert.strictEqual(patch?.children?.[1]?.index, 2);
     });
   });
 
@@ -178,6 +184,7 @@ describe('Phase 2: Diff 算法', () => {
       // text 有 TEXT patch
       assert.strictEqual(patch?.children?.[0]?.children?.[0]?.children?.[0]?.type, 'TEXT');
       assert.strictEqual(patch?.children?.[0]?.children?.[0]?.children?.[0]?.text, 'New Title');
+      assert.strictEqual(patch?.children?.[0]?.children?.[0]?.children?.[0]?.index, 0);
     });
   });
 });

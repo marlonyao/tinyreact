@@ -8,6 +8,7 @@ export interface VNode {
   children: VNode[];
   key?: string | number;
   text?: string | number; // 文本节点内容，type === null 时使用
+  dom?: Node; // 指向对应的真实 DOM 节点
 }
 
 export type ChildType = VNode | string | number | boolean | null | undefined;

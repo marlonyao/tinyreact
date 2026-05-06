@@ -6,8 +6,8 @@ export type PatchType = 'REPLACE' | 'REMOVE' | 'ADD' | 'UPDATE' | 'TEXT';
 
 export interface Patch {
   type: PatchType;
-  // 变更对应的真实 DOM 节点（patch 阶段需要）
-  dom?: Node;
+  // 在父节点中的索引位置（children diff 用）
+  index?: number;
   // 新 VNode（ADD / REPLACE / UPDATE 用）
   vnode?: VNode;
   // 旧 VNode（REMOVE 用）
@@ -116,6 +116,7 @@ function diffChildren(oldChildren: VNode[], newChildren: VNode[]): Patch[] {
     const newChild = i < newChildren.length ? newChildren[i] : null;
     const patch = diff(oldChild, newChild);
     if (patch) {
+      patch.index = i;
       patches.push(patch);
     }
   }
