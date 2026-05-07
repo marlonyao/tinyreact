@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "node --test dist/tests/*.test.js"
+    "test": "node --test dist/tests/*.test.js",
+    "demo:build": "esbuild src/index.ts --bundle --format=iife --global-name=TinyReact --outfile=demo/tinyreact.js"
   },
   "devDependencies": {
     "@types/jsdom": "^28.0.1",
     "@types/node": "^20.0.0",
+    "esbuild": "^0.28.0",
     "jsdom": "^24.0.0",
     "typescript": "^5.4.0"
   }
