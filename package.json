@@ -6,9 +6,10 @@
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/tests/*.test.js",
-    "demo:build": "esbuild src/index.ts --bundle --format=iife --global-name=TinyReact --outfile=demo/tinyreact.js"
+    "demo:build": "node build-demo.js"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.28.6",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^20.0.0",
     "esbuild": "^0.28.0",
