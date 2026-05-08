@@ -1,6 +1,6 @@
 // Virtual Node 类型定义
 
-export type VNodeType = string | Function | null;
+export type VNodeType = string | Function | null | object;
 
 export interface VNode {
   type: VNodeType;

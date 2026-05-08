@@ -10,6 +10,7 @@ import {
   setRerenderFn,
   flushEffects,
 } from './hooks.js';
+import { getProviderId, pushContextValue, popContextValue } from './context.js';
 
 interface ContainerState {
   tree: VNode;
@@ -62,6 +63,21 @@ function getOrCreateInstance(
  * 在此注入 hooks 上下文
  */
 function expandVNode(vnode: VNode, container: HTMLElement): VNode {
+  // 检查是否是 Context.Provider
+  const providerId = getProviderId(vnode.type);
+  if (providerId) {
+    // Provider: push value, expand children, then pop
+    pushContextValue(providerId, vnode.props.value);
+    const expandedChildren = vnode.children.map((child) => expandVNode(child, container));
+    popContextValue(providerId);
+    // Provider 渲染为它的子节点
+    if (expandedChildren.length === 1) {
+      return expandedChildren[0];
+    }
+    // 多个子节点：包装成一个 div
+    return { type: 'div', props: {}, children: expandedChildren };
+  }
+
   if (typeof vnode.type === 'function') {
     const fn = vnode.type as Function;
     const instance = getOrCreateInstance(fn, vnode.props, container);
