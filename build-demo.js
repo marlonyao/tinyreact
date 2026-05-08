@@ -10,7 +10,7 @@ await esbuild.build({
   outfile: 'demo/tinyreact.js',
 });
 
-// Step 2: 编译 demo JSX → JS（inject TinyReact 的 h 函数）
+// Step 2: 编译 TodoList JSX → JS
 await esbuild.build({
   entryPoints: ['demo/todolist.jsx'],
   outfile: 'demo/todolist.js',
@@ -23,7 +23,22 @@ await esbuild.build({
   jsxFragment: 'Fragment',
 });
 
+// Step 3: 编译 Router Demo JSX → JS
+await esbuild.build({
+  entryPoints: ['demo/router.jsx'],
+  outfile: 'demo/router-app.js',
+  format: 'esm',
+  jsx: 'transform',
+  jsxFactory: 'h',
+  jsxFragment: 'Fragment',
+});
+
+// 替换 import 语句为全局变量
+import { readFileSync, writeFileSync } from 'fs';
+let routerJs = readFileSync('demo/router-app.js', 'utf-8');
+routerJs = `var h = TinyReact.createElement;\nvar HashRouter = TinyReact.HashRouter;\nvar Route = TinyReact.Route;\nvar Link = TinyReact.Link;\nvar useRouter = TinyReact.useRouter;\nvar useState = TinyReact.useState;\n` + routerJs;
+writeFileSync('demo/router-app.js', routerJs);
+
 console.log('✅ Demo built successfully!');
-console.log('   demo/tinyreact.js  — framework bundle');
-console.log('   demo/todolist.js   — app (compiled from JSX)');
-console.log('   Open demo/todolist.html in browser');
+console.log('   demo/todolist.html  — TodoList demo');
+console.log('   demo/router.html    — Router demo');

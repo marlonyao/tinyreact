@@ -21,14 +21,21 @@ var TinyReact = (() => {
   // src/index.ts
   var index_exports = {};
   __export(index_exports, {
+    HashRouter: () => HashRouter,
+    Link: () => Link,
+    Route: () => Route,
     applyPatch: () => applyPatch,
+    createContext: () => createContext,
     createDOM: () => createDOM,
     createElement: () => createElement,
     diff: () => diff,
+    matchPath: () => matchPath,
     render: () => render,
     setProps: () => setProps,
     updateProps: () => updateProps,
+    useContext: () => useContext,
     useEffect: () => useEffect,
+    useRouter: () => useRouter,
     useState: () => useState
   });
 
@@ -366,6 +373,41 @@ var TinyReact = (() => {
     effectsToRun = [];
   }
 
+  // src/context.ts
+  var contextStacks = /* @__PURE__ */ new Map();
+  function getStack(id) {
+    let stack = contextStacks.get(id);
+    if (!stack) {
+      stack = [];
+      contextStacks.set(id, stack);
+    }
+    return stack;
+  }
+  function createContext(defaultValue) {
+    const contextId = /* @__PURE__ */ Symbol("context");
+    const provider = { _providerFor: contextId };
+    return { _contextId: contextId, _defaultValue: defaultValue, Provider: provider };
+  }
+  function getProviderId(type) {
+    if (typeof type === "object" && type !== null && "_providerFor" in type) {
+      return type._providerFor;
+    }
+    return null;
+  }
+  function useContext(context) {
+    const stack = getStack(context._contextId);
+    if (stack.length > 0) {
+      return stack[stack.length - 1];
+    }
+    return context._defaultValue;
+  }
+  function pushContextValue(contextId, value) {
+    getStack(contextId).push(value);
+  }
+  function popContextValue(contextId) {
+    getStack(contextId).pop();
+  }
+
   // src/render.ts
   var containerMap = /* @__PURE__ */ new WeakMap();
   var rootMap = /* @__PURE__ */ new WeakMap();
@@ -401,13 +443,30 @@ var TinyReact = (() => {
     return instance;
   }
   function expandVNode(vnode, container) {
+    const providerId = getProviderId(vnode.type);
+    if (providerId) {
+      pushContextValue(providerId, vnode.props.value);
+      const expandedChildren = vnode.children.map((child) => expandVNode(child, container));
+      popContextValue(providerId);
+      if (expandedChildren.length === 1) {
+        return expandedChildren[0];
+      }
+      return { type: "div", props: {}, children: expandedChildren };
+    }
     if (typeof vnode.type === "function") {
       const fn = vnode.type;
       const instance = getOrCreateInstance(fn, vnode.props, container);
       resetHookIndex(instance);
       setCurrentInstance(instance);
-      const result = fn(vnode.props);
+      const propsWithChildren = {
+        ...vnode.props,
+        children: vnode.children.length === 1 ? vnode.children[0] : vnode.children
+      };
+      const result = fn(propsWithChildren);
       clearCurrentInstance();
+      if (result === null || result === void 0) {
+        return { type: null, props: {}, children: [], text: "" };
+      }
       return expandVNode(result, container);
     }
     if (vnode.type === null) {
@@ -460,6 +519,77 @@ var TinyReact = (() => {
     rootMap.set(container, { vnode, container });
     doRender(vnode, container);
     flushEffects();
+  }
+
+  // src/router.ts
+  var RouterContext = createContext({
+    path: "/",
+    navigate: () => {
+    },
+    params: {}
+  });
+  function HashRouter(props) {
+    const getHashPath = () => {
+      const hash = window.location.hash.slice(1) || "/";
+      return hash;
+    };
+    const [path, setPath] = useState(getHashPath());
+    useEffect(() => {
+      const onHashChange = () => {
+        setPath(getHashPath());
+      };
+      window.addEventListener("hashchange", onHashChange);
+      return () => window.removeEventListener("hashchange", onHashChange);
+    }, []);
+    const navigate = (newPath) => {
+      window.location.hash = newPath;
+      if (newPath === path) {
+        setPath(newPath);
+      }
+    };
+    const routerState = { path, navigate, params: {} };
+    return createElement(RouterContext.Provider, { value: routerState }, props.children);
+  }
+  function matchPath(pattern, path) {
+    const patternParts = pattern.split("/").filter(Boolean);
+    const pathParts = path.split("/").filter(Boolean);
+    if (patternParts.length !== pathParts.length) {
+      return { matched: false, params: {} };
+    }
+    const params = {};
+    for (let i = 0; i < patternParts.length; i++) {
+      const patternPart = patternParts[i];
+      const pathPart = pathParts[i];
+      if (patternPart.startsWith(":")) {
+        const paramName = patternPart.slice(1);
+        params[paramName] = pathPart;
+      } else if (patternPart !== pathPart) {
+        return { matched: false, params: {} };
+      }
+    }
+    return { matched: true, params };
+  }
+  function Route(props) {
+    const router = useContext(RouterContext);
+    const { matched, params } = matchPath(props.path, router.path);
+    if (!matched) return null;
+    const Component = props.component;
+    return createElement(Component, { params, navigate: router.navigate });
+  }
+  function Link(props) {
+    const router = useContext(RouterContext);
+    const handleClick = (e) => {
+      e.preventDefault();
+      router.navigate(props.to);
+    };
+    return createElement("a", {
+      href: "#" + props.to,
+      onClick: handleClick,
+      className: props.className || ""
+    }, props.children);
+  }
+  function useRouter() {
+    return useContext(RouterContext);
   }
   return __toCommonJS(index_exports);
 })();

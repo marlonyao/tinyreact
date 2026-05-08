@@ -6,3 +6,4 @@ export { applyPatch } from './patch.js';
 export { createDOM, setProps, updateProps } from './dom.js';
 export { useState, useEffect } from './hooks.js';
 export { createContext, useContext } from './context.js';
+export { HashRouter, Route, Link, useRouter, matchPath } from './router.js';

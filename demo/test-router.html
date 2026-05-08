@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><body>
+<div id="root"></div>
+<div id="err" style="color:red"></div>
+<script src="tinyreact.js"></script>
+<script>
+window.onerror = function(msg, url, line) {
+  document.getElementById('err').textContent = 'ERROR: ' + msg + ' at line ' + line;
+};
+</script>
+<script src="router-app.js"></script>
+</body></html>

@@ -87,10 +87,20 @@ function expandVNode(vnode: VNode, container: HTMLElement): VNode {
     setCurrentInstance(instance);
 
     // 执行组件函数（hooks 在此内部被调用）
-    const result = fn(vnode.props);
+    // 将 vnode.children 注入为 props.children（React 行为）
+    const propsWithChildren = {
+      ...vnode.props,
+      children: vnode.children.length === 1 ? vnode.children[0] : vnode.children,
+    };
+    const result = fn(propsWithChildren);
 
     // 清除全局上下文，防止外部代码误用 hooks
     clearCurrentInstance();
+
+    // 组件返回 null → 渲染空文本节点
+    if (result === null || result === undefined) {
+      return { type: null, props: {}, children: [], text: '' };
+    }
 
     // 递归展开子树（结果可能仍是组件，继续展开直到纯元素树）
     return expandVNode(result, container);
