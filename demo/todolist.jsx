@@ -1,11 +1,114 @@
 /**
- * TinyReact Browser Demo — TodoList (JSX)
+ * TinyReact Browser Demo — TodoList (JSX + Nested Components)
  * 
- * JSX 文件通过 Babel 编译为普通 JS，再由 esbuild 打包。
+ * 演示组件拆分和嵌套：
+ * - TodoApp: 根组件，管理状态
+ * - TodoHeader: 标题区域
+ * - TodoInput: 输入框
+ * - TodoFilters: 筛选按钮
+ * - TodoList: 列表区域
+ * - TodoItem: 单个 todo 项
+ * - TodoFooter: 底部统计
+ * 
  * 构建命令：npm run demo:build
  */
 
 const { createElement: h, render, useState, useEffect } = TinyReact;
+
+// ========== 子组件 ==========
+
+/** 标题区域 */
+const TodoHeader = () => (
+  <header>
+    <h1>TinyReact TodoList</h1>
+    <p className="subtitle">A React-like framework from scratch (~600 LOC)</p>
+  </header>
+);
+
+/** 输入框组件 */
+const TodoInput = (props) => (
+  <div className="input-row">
+    <input
+      type="text"
+      className="todo-input"
+      value={props.value}
+      placeholder="What needs to be done?"
+      onInput={props.onInput}
+      onKeyDown={props.onKeyDown}
+    />
+    <button className="btn-add" onClick={props.onAdd}>Add</button>
+  </div>
+);
+
+/** 筛选按钮组件 */
+const TodoFilters = (props) => (
+  <div className="filters">
+    <button
+      className={props.filter === 'all' ? 'active' : ''}
+      onClick={() => props.onFilterChange('all')}
+    >
+      All ({props.total})
+    </button>
+    <button
+      className={props.filter === 'active' ? 'active' : ''}
+      onClick={() => props.onFilterChange('active')}
+    >
+      Active ({props.active})
+    </button>
+    <button
+      className={props.filter === 'completed' ? 'active' : ''}
+      onClick={() => props.onFilterChange('completed')}
+    >
+      Completed ({props.completed})
+    </button>
+  </div>
+);
+
+/** 单个 Todo 项组件 */
+const TodoItem = (props) => (
+  <li key={props.todo.id} className={props.todo.done ? 'done' : ''}>
+    <input
+      type="checkbox"
+      checked={props.todo.done}
+      onChange={() => props.onToggle(props.todo.id)}
+    />
+    <span className="text">{props.todo.text}</span>
+    <button className="btn-delete" onClick={() => props.onRemove(props.todo.id)}>×</button>
+  </li>
+);
+
+/** 列表区域组件 */
+const TodoList = (props) => (
+  <ul className="todo-list">
+    {props.items.length === 0
+      ? <li className="empty">No tasks here. Add one above.</li>
+      : props.items.map(todo =>
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            onToggle={props.onToggle}
+            onRemove={props.onRemove}
+          />
+        )
+    }
+  </ul>
+);
+
+/** 底部统计组件 */
+const TodoFooter = (props) => (
+  <footer>
+    <span className="counter">
+      {props.remaining} items left
+    </span>
+    {props.hasCompleted && (
+      <button className="btn-clear" onClick={props.onClearCompleted}>
+        Clear completed
+      </button>
+    )}
+  </footer>
+);
+
+// ========== 根组件 ==========
 
 const TodoApp = () => {
   const [todos, setTodos] = useState([
@@ -27,6 +130,8 @@ const TodoApp = () => {
     return true;
   });
 
+  const remaining = todos.filter(t => !t.done).length;
+
   const addTodo = () => {
     const text = input.trim();
     if (!text) return;
@@ -44,77 +149,40 @@ const TodoApp = () => {
     setTodos(prev => prev.filter(t => t.id !== id));
   };
 
+  const clearCompleted = () => {
+    setTodos(prev => prev.filter(t => !t.done));
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') addTodo();
   };
 
   return (
     <div className="app">
-      <header>
-        <h1>TinyReact TodoList</h1>
-        <p className="subtitle">A React-like framework from scratch (~600 LOC)</p>
-      </header>
-
-      <div className="input-row">
-        <input
-          type="text"
-          className="todo-input"
-          value={input}
-          placeholder="What needs to be done?"
-          onInput={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <button className="btn-add" onClick={addTodo}>Add</button>
-      </div>
-
-      <div className="filters">
-        <button
-          className={filter === 'all' ? 'active' : ''}
-          onClick={() => setFilter('all')}
-        >
-          All ({todos.length})
-        </button>
-        <button
-          className={filter === 'active' ? 'active' : ''}
-          onClick={() => setFilter('active')}
-        >
-          Active ({todos.filter(t => !t.done).length})
-        </button>
-        <button
-          className={filter === 'completed' ? 'active' : ''}
-          onClick={() => setFilter('completed')}
-        >
-          Completed ({todos.filter(t => t.done).length})
-        </button>
-      </div>
-
-      <ul className="todo-list">
-        {filtered.length === 0
-          ? <li className="empty">No tasks here. Add one above.</li>
-          : filtered.map(todo =>
-              <li key={todo.id} className={todo.done ? 'done' : ''}>
-                <input
-                  type="checkbox"
-                  checked={todo.done}
-                  onChange={() => toggle(todo.id)}
-                />
-                <span className="text">{todo.text}</span>
-                <button className="btn-delete" onClick={() => remove(todo.id)}>×</button>
-              </li>
-            )
-        }
-      </ul>
-
-      <footer>
-        <span className="counter">
-          {todos.filter(t => !t.done).length} items left
-        </span>
-        {todos.some(t => t.done) && (
-          <button className="btn-clear" onClick={() => setTodos(prev => prev.filter(t => !t.done))}>
-            Clear completed
-          </button>
-        )}
-      </footer>
+      <TodoHeader />
+      <TodoInput
+        value={input}
+        onInput={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onAdd={addTodo}
+      />
+      <TodoFilters
+        filter={filter}
+        total={todos.length}
+        active={remaining}
+        completed={todos.filter(t => t.done).length}
+        onFilterChange={setFilter}
+      />
+      <TodoList
+        items={filtered}
+        onToggle={toggle}
+        onRemove={remove}
+      />
+      <TodoFooter
+        remaining={remaining}
+        hasCompleted={todos.some(t => t.done)}
+        onClearCompleted={clearCompleted}
+      />
     </div>
   );
 };
